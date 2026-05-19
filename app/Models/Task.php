@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $title
  * @property string|null $description
  * @property string $status
- * @property \Illuminate\Support\Carbon|null $due_date
+ * @property Carbon|null $due_date
  */
 #[Fillable(['user_id', 'title', 'description', 'status', 'due_date'])]
 class Task extends Model
