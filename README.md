@@ -101,22 +101,11 @@ chmod +x scripts/curl-api-smoke.sh
 
 ## テスト（更新耐性）
 
-画像の方針どおり **実行前（静的）→ 実行後（動的）** で検証します。
-
-| タイミング | ツール | 役割 | コマンド（Docker） |
-|-----------|--------|------|-------------------|
-| 実行前 | PHPStan | 型・構造（主軸） | `docker compose exec app composer phpstan` |
-| 実行前 | ESLint | 構文・規約（補助） | `docker compose --profile node run --rm node npm run lint` |
-| 実行後 | PHPUnit | ロジック・仕様（主軸） | `docker compose exec app composer test` |
-| 実行後 | Postman | API 通信（主軸） | [postman/README.md](postman/README.md) を参照 |
-
-一括（PHPStan + ESLint + PHPUnit）:
+PHPStan / ESLint / PHPUnit / Postman の概要・手順は [docs/TESTING.md](docs/TESTING.md) を参照してください。
 
 ```bash
-./scripts/check-quality.sh
+./scripts/check-quality.sh   # PHPStan + ESLint + PHPUnit
 ```
-
-Postman は `postman/Task-API.postman_collection.json` と `postman/local.postman_environment.json` を Import し、**Auth → Login** の後に **Tasks API** を実行してください。
 
 よく使うコマンド:
 

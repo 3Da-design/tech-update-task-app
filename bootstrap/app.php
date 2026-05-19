@@ -16,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
     health: '/up',
   )
   ->withMiddleware(function (Middleware $middleware): void {
-    // Postman / 同一オリジンからの API でも Breeze のセッション認証を使えるようにする
     $middleware->api(prepend: [
       EncryptCookies::class,
       AddQueuedCookiesToResponse::class,
