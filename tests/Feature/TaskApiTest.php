@@ -30,6 +30,7 @@ class TaskApiTest extends TestCase
       'title' => 'A',
       'description' => null,
       'status' => 'todo',
+      'priority' => 'medium',
       'due_date' => null,
     ]);
 
@@ -45,6 +46,7 @@ class TaskApiTest extends TestCase
     $response = $this->actingAs($this->user)->postJson('/api/tasks', [
       'title' => 'New Task',
       'status' => 'todo',
+      'priority' => 'medium',
     ]);
 
     $response->assertCreated();
@@ -58,6 +60,7 @@ class TaskApiTest extends TestCase
     $response = $this->actingAs($this->user)->postJson('/api/tasks', [
       'title' => 't',
       'status' => 'invalid',
+      'priority' => 'medium',
     ]);
 
     $response->assertStatus(422);
@@ -69,6 +72,7 @@ class TaskApiTest extends TestCase
   {
     $response = $this->actingAs($this->user)->postJson('/api/tasks', [
       'status' => 'todo',
+      'priority' => 'medium',
     ]);
 
     $response->assertStatus(422);
@@ -84,6 +88,7 @@ class TaskApiTest extends TestCase
       'title' => 'Old',
       'description' => null,
       'status' => 'todo',
+      'priority' => 'medium',
       'due_date' => null,
     ]);
 
@@ -116,6 +121,7 @@ class TaskApiTest extends TestCase
       'title' => 'To delete',
       'description' => null,
       'status' => 'todo',
+      'priority' => 'medium',
       'due_date' => null,
     ]);
 

@@ -62,7 +62,7 @@ fi
 
 echo ">> npm dependencies"
 if [[ ! -f node_modules/vite/package.json ]]; then
-  docker compose --profile node run --rm node sh -c "rm -rf node_modules && npm ci"
+  docker compose --profile node run --rm node sh -c "npm ci --no-audit --no-fund"
 fi
 
 echo ">> ESLint"
@@ -76,8 +76,11 @@ docker compose --profile node run --rm node npm run build
 
 echo ">> PHPUnit (JUnit)"
 JUNIT_HOST="$TMP_DIR/junit.xml"
+set +e
 docker compose exec -T app sh -c 'mkdir -p storage/framework/testing && php artisan test --log-junit storage/framework/testing/junit.xml'
-docker compose cp "app:/var/www/html/storage/framework/testing/junit.xml" "$JUNIT_HOST"
+PHPUNIT_CMD_EXIT=$?
+set -e
+docker compose cp "app:/var/www/html/storage/framework/testing/junit.xml" "$JUNIT_HOST" 2>/dev/null || true
 
 if [[ -f "$JUNIT_HOST" ]]; then
   read -r PHPUNIT_TOTAL PHPUNIT_FAIL PHPUNIT_PASS < <(
@@ -105,6 +108,9 @@ print(tests, fail, max(tests - fail - skipped, 0))
 PY
   )
   if [[ "$PHPUNIT_FAIL" -gt 0 ]]; then
+    PHPUNIT_EXIT=1
+  fi
+  if [[ "${PHPUNIT_CMD_EXIT:-0}" -ne 0 ]]; then
     PHPUNIT_EXIT=1
   fi
 else

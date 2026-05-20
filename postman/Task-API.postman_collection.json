@@ -192,7 +192,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Postman task\",\n  \"status\": \"todo\"\n}"
+              "raw": "{\n  \"title\": \"Postman task\",\n  \"status\": \"todo\",\n  \"priority\": \"medium\"\n}"
             },
             "url": "{{baseUrl}}/api/tasks"
           },
@@ -223,7 +223,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"t\",\n  \"status\": \"invalid\"\n}"
+              "raw": "{\n  \"title\": \"t\",\n  \"status\": \"invalid\",\n  \"priority\": \"medium\"\n}"
             },
             "url": "{{baseUrl}}/api/tasks"
           },
