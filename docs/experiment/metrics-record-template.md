@@ -29,14 +29,16 @@
 | `metrics_json` | 自動収集 JSON のパス | `experiment/metrics/baseline-....json` |
 | `notes` | 自由記述 | `TaskService のみ修正で復旧` |
 
-## 記録例
+## 記録例（本リポジトリで実施済み）
 
 | repository | scenario | phase | phpunit_pass | phpunit_total | phpstan_errors | work_minutes | notes |
 |------------|----------|-------|--------------|---------------|----------------|--------------|-------|
-| improved | api-spec-change | after_update | 25 | 32 | 3 | 0 | 更新直後・未修正 |
-| improved | api-spec-change | after_fix | 32 | 32 | 0 | 25 | TaskService + TaskResource のみ |
-| legacy | api-spec-change | after_update | 18 | 32 | 5 | 0 | Web/API Controller 両方で失敗 |
-| legacy | api-spec-change | after_fix | 32 | 32 | 0 | 90 | Controller 2 ファイル + テスト |
+| improved | api-spec-change | after_update | 36 | 38 | 0 | — | 詳細: [results/api-spec-change/](./results/api-spec-change/) |
+| improved | api-spec-change | after_fix | 38 | 38 | 0 | — | TaskService + Resource + テスト |
+| legacy | api-spec-change | after_update | 36 | 38 | 0 | — | Web/API Controller 両方で normalize 更新 |
+| legacy | api-spec-change | after_fix | 38 | 38 | 0 | — | 同上 + テスト |
+
+自動収集 JSON の一覧: [results/COMPARISON.md](./results/COMPARISON.md)
 
 ## 自動収集との対応
 

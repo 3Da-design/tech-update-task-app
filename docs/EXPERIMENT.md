@@ -116,6 +116,16 @@ git tag -a experiment-baseline-v1 -m "Experiment baseline: improved architecture
 7. [metrics-record-template.md](./experiment/metrics-record-template.md) に記録
 8. 従来構成リポジトリで 3〜7 を繰り返し、比較表を作成
 
+## 実験結果（収集済み）
+
+| ドキュメント | 内容 |
+|--------------|------|
+| [experiment/results/COMPARISON.md](./experiment/results/COMPARISON.md) | 全シナリオの 3 フェーズ比較表 |
+| [experiment/results/api-spec-change/](./experiment/results/api-spec-change/) | シナリオ1（改良） |
+| [experiment/results/legacy/api-spec-change/](./experiment/results/legacy/api-spec-change/) | シナリオ1（従来・`legacy-architecture` ブランチ） |
+
+従来構成の実装は **`legacy-architecture` ブランチ** にあります（別リポジトリの代わり）。
+
 ## 関連ドキュメント
 
 | ドキュメント | 内容 |
