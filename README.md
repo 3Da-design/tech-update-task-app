@@ -210,7 +210,11 @@ composer experiment:metrics -- --phase baseline
 git tag -a experiment-baseline-v1 -m "Experiment baseline: improved architecture"
 ```
 
-メトリクス JSON は `experiment/metrics/` に出力されます（Git 管理外）。
+メトリクス JSON は **`experiment/metrics/runs/<run_id>/baseline.json`** などに出力されます（Git 管理外）。`baseline` のたびに新しい `run-<UTC>` が作られ、続く `after_update` / `after_fix` は同じフォルダに保存されます。表の自動生成: `composer experiment:record -- --scenario <名前> --write`（`RECORD.md` をラン内に作成）。
+
+### アクティブランをリセットしたいとき
+
+別の実験を始める前に `experiment/metrics/.active-run` を削除するか、改めて `baseline`（または `baseline --run 新ID`）を実行してください。
 
 ### 2. 更新シナリオの実施
 
@@ -227,7 +231,8 @@ composer experiment:metrics -- --phase after_fix
 
 ### 3. 記録
 
-[docs/experiment/metrics-record-template.md](docs/experiment/metrics-record-template.md) の列定義に従い、スプレッドシート等に記録します。
+1. `composer experiment:record -- --scenario <シナリオID> --write` で `experiment/metrics/runs/<run_id>/RECORD.md` を生成（任意・自動で表が出ます）。
+2. [docs/experiment/metrics-record-template.md](docs/experiment/metrics-record-template.md) の手動列（工数・CI など）をスプレッドシートへ追記。
 
 ### 4. 従来構成との比較
 
@@ -250,7 +255,7 @@ composer experiment:metrics -- --phase after_fix
 
 | 指標 | 概要 | 取得 |
 |------|------|------|
-| **テスト通過率** | PHPUnit / Newman 等の成功 ÷ 総数 | `composer experiment:metrics` |
+| **テスト通過率** | PHPUnit / Newman 等の成功 ÷ 総数 | `composer experiment:metrics` → `runs/<id>/<phase>.json` |
 | **修正工数** | 作業時間、変更ファイル数、diff、コミット数 | 手動 + `git diff --stat` |
 | **エラー発生率** | PHPStan 件数、CI 失敗ジョブ、手動不具合 | スクリプト + 手動 |
 

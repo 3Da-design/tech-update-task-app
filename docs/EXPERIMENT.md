@@ -61,7 +61,9 @@
 | ESLint | `npm run lint` が exit 0 |
 | PHPStan | `composer phpstan` が exit 0（エラー 0 件） |
 
-自動収集: `composer experiment:metrics`（[scripts/collect-experiment-metrics.sh](../scripts/collect-experiment-metrics.sh)）
+自動収集: `composer experiment:metrics`（[scripts/collect-experiment-metrics.sh](../scripts/collect-experiment-metrics.sh)）。JSON は **`experiment/metrics/runs/<run_id>/<phase>.json`** に保存されます（`baseline` で新規 `run-*` が作成され、`.active-run` に記録されます）。
+
+表形式の記録自動生成: `composer experiment:record`（[scripts/generate_experiment_record.py](../scripts/generate_experiment_record.py)）。詳細は [metrics-record-template.md](./experiment/metrics-record-template.md) を参照してください。
 
 ### 2. 修正工数
 
@@ -91,9 +93,11 @@
 
 | フェーズ | 説明 | メトリクス収集 |
 |----------|------|----------------|
-| `baseline` | 更新前・CI 緑の状態 | `composer experiment:metrics -- --phase baseline` |
-| `after_update` | 更新適用直後・テスト未修正 | 同上 `--phase after_update` |
-| `after_fix` | 修正完了・CI 緑 | 同上 `--phase after_fix` |
+| `baseline` | 更新前・CI 緑の状態 | `composer experiment:metrics -- --phase baseline`（新しい `runs/run-<UTC>/` が作成される） |
+| `after_update` | 更新適用直後・テスト未修正 | `composer experiment:metrics -- --phase after_update`（`.active-run` のランに保存） |
+| `after_fix` | 修正完了・CI 緑 | `composer experiment:metrics -- --phase after_fix` |
+
+任意: すべてのフェーズを同じフォルダにまとめたい場合は `composer experiment:metrics -- --phase baseline --run my-experiment-1` のように **`--run`** で ID を固定します。
 
 ## ベースラインの確立
 
@@ -110,10 +114,10 @@ git tag -a experiment-baseline-v1 -m "Experiment baseline: improved architecture
 1. ベースライン tag を作成
 2. シナリオ用ブランチを切る（例: `exp/api-spec-change`）
 3. [scenarios/](./experiment/scenarios/) に従い更新を適用
-4. `after_update` でメトリクス収集
+4. `after_update` でメトリクス収集（同一 `runs/<run_id>/`）
 5. テスト・コードを修正し CI を緑にする
 6. `after_fix` でメトリクス収集
-7. [metrics-record-template.md](./experiment/metrics-record-template.md) に記録
+7. `composer experiment:record -- --scenario <シナリオID> --write` で `RECORD.md` を生成し、必要ならスプレッドシートへ転記（[metrics-record-template.md](./experiment/metrics-record-template.md) 参照）
 8. 従来構成リポジトリで 3〜7 を繰り返し、比較表を作成
 
 ## 関連ドキュメント
@@ -124,4 +128,6 @@ git tag -a experiment-baseline-v1 -m "Experiment baseline: improved architecture
 | [TESTING.md](./TESTING.md) | テストツールの詳細 |
 | [CI.md](./CI.md) | GitHub Actions |
 | [FeatureList.md](./FeatureList.md) | 機能一覧 |
-| [experiment/metrics-record-template.md](./experiment/metrics-record-template.md) | 記録テンプレート |
+| [metrics-record-template.md](./experiment/metrics-record-template.md) | 記録テンプレート・3 行の意味・`experiment:record` |
+| [scripts/collect-experiment-metrics.sh](../scripts/collect-experiment-metrics.sh) | メトリクス収集（runs フォルダ） |
+| [scripts/generate_experiment_record.py](../scripts/generate_experiment_record.py) | `RECORD.md` 自動生成 |

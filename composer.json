@@ -62,6 +62,7 @@
             "@test"
         ],
         "experiment:metrics": "bash scripts/collect-experiment-metrics.sh",
+        "experiment:record": "python3 scripts/generate_experiment_record.py",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

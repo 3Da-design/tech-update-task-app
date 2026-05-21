@@ -65,4 +65,4 @@ composer experiment:metrics -- --phase after_fix
 
 - [ ] 更新したツールのバージョンが両リポジトリで一致
 - [ ] CI 4 ジョブ成功
-- [ ] `experiment/metrics/` に `after_update` / `after_fix` JSON あり
+- [ ] `experiment/metrics/runs/<run_id>/` に `after_update` / `after_fix` の JSON がある

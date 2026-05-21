@@ -106,7 +106,7 @@ class TaskService
    */
   private function normalizeTaskPayload(array $data): array
   {
-    $allowed = ['title', 'description', 'status', 'due_date'];
+    $allowed = ['title', 'description', 'status', 'priority', 'due_date'];
     $data = array_intersect_key($data, array_flip($allowed));
 
     if (array_key_exists('title', $data) && is_string($data['title'])) {

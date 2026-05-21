@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
-# 実験メトリクスを収集し experiment/metrics/<phase>-<timestamp>.json に出力する
+# 実験メトリクスを収集し experiment/metrics/runs/<run_id>/<phase>.json に出力する
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 PHASE="baseline"
+RUN_ID=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --phase)
       PHASE="${2:?--phase requires a value}"
+      shift 2
+      ;;
+    --run)
+      RUN_ID="${2:?--run requires a value}"
       shift 2
       ;;
     *)
@@ -28,10 +33,51 @@ case "$PHASE" in
 esac
 
 METRICS_DIR="$ROOT/experiment/metrics"
-mkdir -p "$METRICS_DIR"
+RUNS_DIR="$METRICS_DIR/runs"
+ACTIVE_RUN_FILE="$METRICS_DIR/.active-run"
+
+sanitize_run_id() {
+  local s="$1"
+  s="${s//[^a-zA-Z0-9._-]/_}"
+  if [[ ${#s} -gt 80 ]]; then
+    s="${s:0:80}"
+  fi
+  echo "$s"
+}
+
+mkdir -p "$RUNS_DIR"
+
+if [[ -z "$RUN_ID" ]]; then
+  if [[ "$PHASE" == "baseline" ]]; then
+    RUN_ID="run-$(date -u +"%Y%m%dT%H%M%SZ")"
+    RUN_ID="$(sanitize_run_id "$RUN_ID")"
+    mkdir -p "$RUNS_DIR/$RUN_ID"
+    printf '%s' "$RUN_ID" >"$ACTIVE_RUN_FILE"
+    echo "== New experiment run: $RUN_ID (saved to experiment/metrics/.active-run) =="
+  else
+    if [[ ! -f "$ACTIVE_RUN_FILE" ]]; then
+      echo "error: no --run and no experiment/metrics/.active-run" >&2
+      echo "hint: run baseline first: composer experiment:metrics -- --phase baseline" >&2
+      echo "   or: composer experiment:metrics -- --phase $PHASE --run <run_id>" >&2
+      exit 1
+    fi
+    RUN_ID="$(sanitize_run_id "$(tr -d '\n' <"$ACTIVE_RUN_FILE")")"
+    echo "== Using active run from .active-run: $RUN_ID =="
+  fi
+else
+  RUN_ID="$(sanitize_run_id "$RUN_ID")"
+  mkdir -p "$RUNS_DIR/$RUN_ID"
+  if [[ "$PHASE" == "baseline" ]]; then
+    printf '%s' "$RUN_ID" >"$ACTIVE_RUN_FILE"
+    echo "== Active run set to: $RUN_ID (from --run) =="
+  fi
+fi
+
+RUN_DIR="$RUNS_DIR/$RUN_ID"
+mkdir -p "$RUN_DIR"
 
 TIMESTAMP="$(date -u +"%Y%m%dT%H%M%SZ")"
-OUTPUT="$METRICS_DIR/${PHASE}-${TIMESTAMP}.json"
+OUTPUT="$RUN_DIR/${PHASE}.json"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -48,7 +94,7 @@ NEWMAN_PASS=0
 NEWMAN_FAIL=0
 NEWMAN_TOTAL=0
 
-echo "== Collecting experiment metrics (phase: $PHASE) =="
+echo "== Collecting experiment metrics (phase: $PHASE, run: $RUN_ID) =="
 
 echo ">> PHPStan"
 set +e
@@ -62,7 +108,7 @@ fi
 
 echo ">> npm dependencies"
 if [[ ! -f node_modules/vite/package.json ]]; then
-  docker compose --profile node run --rm node sh -c "rm -rf node_modules && npm ci"
+  docker compose --profile node run --rm node sh -c "npm ci --no-audit --no-fund"
 fi
 
 echo ">> ESLint"
@@ -76,8 +122,11 @@ docker compose --profile node run --rm node npm run build
 
 echo ">> PHPUnit (JUnit)"
 JUNIT_HOST="$TMP_DIR/junit.xml"
+set +e
 docker compose exec -T app sh -c 'mkdir -p storage/framework/testing && php artisan test --log-junit storage/framework/testing/junit.xml'
-docker compose cp "app:/var/www/html/storage/framework/testing/junit.xml" "$JUNIT_HOST"
+PHPUNIT_CMD_EXIT=$?
+set -e
+docker compose cp "app:/var/www/html/storage/framework/testing/junit.xml" "$JUNIT_HOST" 2>/dev/null || true
 
 if [[ -f "$JUNIT_HOST" ]]; then
   read -r PHPUNIT_TOTAL PHPUNIT_FAIL PHPUNIT_PASS < <(
@@ -107,6 +156,9 @@ PY
   if [[ "$PHPUNIT_FAIL" -gt 0 ]]; then
     PHPUNIT_EXIT=1
   fi
+  if [[ "${PHPUNIT_CMD_EXIT:-0}" -ne 0 ]]; then
+    PHPUNIT_EXIT=1
+  fi
 else
   echo "WARN: JUnit XML not found; PHPUnit counts default to 0" >&2
 fi
@@ -126,13 +178,13 @@ fi
 docker compose exec -T app php artisan migrate --force --seed
 
 NEWMAN_JSON="$TMP_DIR/newman.json"
-NEWMAN_EXPORT="$ROOT/experiment/metrics/.newman-export.json"
+NEWMAN_EXPORT="$RUN_DIR/.newman-export.json"
 rm -f "$NEWMAN_EXPORT"
 set +e
 docker compose --profile node run --rm node sh -c \
   "npm run test:api:docker -- \
     --reporters cli,json \
-    --reporter-json-export experiment/metrics/.newman-export.json" 2>"$TMP_DIR/newman.stderr"
+    --reporter-json-export experiment/metrics/runs/${RUN_ID}/.newman-export.json" 2>"$TMP_DIR/newman.stderr"
 NEWMAN_EXIT=$?
 set -e
 
@@ -172,13 +224,14 @@ if [[ "$NEWMAN_TOTAL" -gt 0 ]]; then
   newman_rate="$(python3 -c "print(round($NEWMAN_PASS / $NEWMAN_TOTAL * 100, 2))")"
 fi
 
-export OUTPUT PHASE TIMESTAMP PHPSTAN_EXIT PHPSTAN_ERRORS ESLINT_EXIT PHPUNIT_EXIT NEWMAN_EXIT
+export OUTPUT PHASE TIMESTAMP RUN_ID PHPSTAN_EXIT PHPSTAN_ERRORS ESLINT_EXIT PHPUNIT_EXIT NEWMAN_EXIT
 export PHPUNIT_PASS PHPUNIT_FAIL PHPUNIT_TOTAL NEWMAN_PASS NEWMAN_FAIL NEWMAN_TOTAL
 export phpunit_rate newman_rate GIT_SHORTSTAT
 
 python3 - <<'PY'
 import json, os
 doc = {
+    "run_id": os.environ["RUN_ID"],
     "phase": os.environ["PHASE"],
     "recorded_at": os.environ["TIMESTAMP"],
     "repository": "improved",
