@@ -119,11 +119,16 @@ composer experiment:record -- --scenario api-spec-change-status-int --write
 ./scripts/publish-experiment-results.sh --scenario api-spec-change-status-int
 ```
 
-## 記録するメトリクス
+## 記録するメトリクス（主指標）
 
-- PHPUnit / Newman 通過率（`after_update` vs `after_fix`）
-- **`after_fix` の `git.files_changed`**（priority シナリオとの比較）
-- 作業時間（分）
+| 優先 | 指標 | 取得元 |
+|------|------|--------|
+| 1 | 変更ファイル数 | `git.files_changed`（`--diff-ref experiment-baseline-v1`） |
+| 2 | 追加 / 削除行数 | `git.lines_added` / `git.lines_deleted` |
+| 3 | 更新直後のテスト失敗数 | `phpunit.fail` / `newman.fail`（`after_update`） |
+| 4 | 作業時間（分） | 手動（テンプレート） |
+
+**期待される差:** 従来構成は `files_changed` が改良構成より **+2（Web / API Controller）** 程度多い。
 
 ## 完了条件
 
@@ -133,7 +138,7 @@ composer experiment:record -- --scenario api-spec-change-status-int --write
 
 ## 関連
 
-- [EXPERIMENT.md](../../EXPERIMENT.md) — 実験設計・評価指標
+- [EXPERIMENT.md](../../EXPERIMENT.md) — 実験設計・主評価指標の定義
 - [metrics-record-template.md](../metrics-record-template.md) — スプレッドシート列定義
 - [api-spec-change-priority.md](./api-spec-change-priority.md) — 属性追加シナリオ（対比用）
 - [db-schema-change.md](./db-schema-change.md) — クエリ変更シナリオ

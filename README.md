@@ -27,12 +27,14 @@
 |------|------|
 | **ゴール** | 設計（モジュール化 + CI/CD）が技術更新時の影響をどれだけ抑えられるかを定量的に示す |
 | **本リポジトリ** | 改良構成（Controller / Service / Repository + Interface） |
-| **ベースライン** | **`main` = 4 属性タスク**（`experiment-baseline-v1` タグ）。`priority` 等のシナリオ変更は `exp/*` ブランチのみ |
-| **対照** | 同一リポジトリの `legacy-architecture` ブランチ（タスク領域を Controller 直 DB に戻した従来構成） |
-| **比較条件** | 同一アプリ（タスク管理）、同一スタック（Laravel）、同一 CI ワークフロー |
+| **ベースライン** | **`main`** および **`experiment-baseline-v1` タグ**。タスク属性は **`title` / `description` / `due_date` / `status` の 4 項目のみ**。`priority` 追加・status integer 化などの仕様変更は **`exp/*` ブランチ** で実施 |
+| **対照** | 従来構成リポジトリ（`tech-update-task-app-legacy`、Fat Controller・Service/Repository なし） |
+| **比較条件** | 同一アプリ（タスク管理）、同一スタック（Laravel）、同一 CI ワークフロー・同一 Feature テスト |
 | **評価スコープ** | **アプリ全体**（認証・プロフィール・タスク・CI 全ジョブ） |
 
 詳細は [docs/EXPERIMENT.md](docs/EXPERIMENT.md) を参照してください。
+
+> **フロントエンド:** 本リポジトリは Blade + Tailwind CSS + Vite + Alpine.js。React 等への移行比較は主シナリオ外の **拡張比較**（[EXPERIMENT.md — フロントエンドスタック](docs/EXPERIMENT.md#フロントエンドスタック拡張比較)）として位置づける。
 
 ---
 
@@ -236,18 +238,28 @@ composer experiment:metrics -- --phase after_fix --diff-ref experiment-baseline-
 
 ## 更新シナリオ
 
-シナリオ手順は [docs/experiment/scenarios/](docs/experiment/scenarios/) に定義します（現時点では未作成）。
+本研究の **主シナリオは 3 件**。いずれも [docs/experiment/scenarios/](docs/experiment/scenarios/) に手順があり、`experiment-baseline-v1` から `exp/*` ブランチで実施します。
+
+| # | シナリオ | ドキュメント |
+|---|----------|--------------|
+| 1 | API 仕様変更: status integer 化 | [api-spec-change-status-int.md](docs/experiment/scenarios/api-spec-change-status-int.md) |
+| 2 | API 仕様変更: priority 追加 | [api-spec-change-priority.md](docs/experiment/scenarios/api-spec-change-priority.md) |
+| 3 | DB / クエリ変更（タイトル検索） | [db-schema-change.md](docs/experiment/scenarios/db-schema-change.md) |
+
+**拡張実験（参考）:** Laravel バージョン更新・テストツール更新・JavaScript ライブラリ変更は、主シナリオとは別枠の参考計測です。手順 MD は本リポジトリには含めず、収集済み結果は `tech-update-task-app-legacy` リポジトリの `docs/experiment/results/COMPARISON.md` の「拡張実験」節を参照してください。
 
 ---
 
 ## 評価指標
 
-| 指標 | 概要 | 取得 |
-|------|------|------|
-| **修正工数（主）** | 変更ファイル数・追加/削除行 | `composer experiment:metrics -- --diff-ref experiment-baseline-v1` の `git.*` |
-| **テスト通過率** | PHPUnit / Newman 等の成功 ÷ 総数 | 同上（特に `after_update` の失敗数） |
-| **作業時間** | 分 | 手動（テンプレート） |
-| **エラー発生率** | PHPStan 件数、CI 失敗ジョブ | スクリプト + 手動 |
+**主指標は修正工数**（`after_fix` フェーズの変更ファイル数・行数）。API 仕様変更シナリオでは、改良構成と従来構成で **テスト通過率が同一になることがある** ため、通過率だけでは構成差を評価できません。
+
+| 優先 | 指標 | 概要 | 取得 |
+|------|------|------|------|
+| **1** | **修正工数** | 変更ファイル数・追加/削除行 | `composer experiment:metrics -- --diff-ref experiment-baseline-v1` の `git.*`（**after_fix**） |
+| 2 | 更新直後のテスト失敗数 | PHPUnit / Newman の fail 件数 | 同上（**after_update**） |
+| 3 | 作業時間 | 分 | 手動（[metrics-record-template.md](docs/experiment/metrics-record-template.md)） |
+| 4 | エラー発生率 | PHPStan 件数、CI 失敗ジョブ | スクリプト + 手動 |
 
 定義の詳細: [docs/EXPERIMENT.md](docs/EXPERIMENT.md)
 
