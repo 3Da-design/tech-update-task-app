@@ -48,7 +48,7 @@ class TaskController extends Controller
     $tasks->updateForDefaultUser($this->parseTaskId($id), $request->validated());
 
     return redirect()
-      ->route('tasks.index', $request->only(['title', 'status', 'due_date_sort']))
+      ->route('tasks.index', $request->only(['title', 'status', 'priority', 'priority_sort', 'due_date_sort']))
       ->with('status', 'タスクを更新しました。');
   }
 
