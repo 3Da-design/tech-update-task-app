@@ -41,6 +41,18 @@
   </div>
 
   <div class="app-form-field">
+    <x-input-label for="priority" value="優先度" />
+    <x-select-input id="priority" name="priority" class="block w-full">
+      @foreach (config('task.priority_values') as $priority)
+        <option value="{{ $priority }}" @selected(old('priority', $task?->priority ?? 'medium') === $priority)>
+          {{ $priority }}
+        </option>
+      @endforeach
+    </x-select-input>
+    <x-input-error :messages="$errors->get('priority')" class="mt-2" />
+  </div>
+
+  <div class="app-form-field">
     <x-input-label for="due_date" value="期限" />
     <x-text-input
       id="due_date"
