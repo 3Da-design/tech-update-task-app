@@ -140,7 +140,7 @@ class TaskListFilterTest extends TestCase
     $response->assertSee('Important task', false);
   }
 
-  public function test_api_index_title_searach_is_case_insensitive(): void
+  public function test_api_index_title_search_is_case_insensitive(): void
   {
     Task::query()->create([
       'user_id' => $this->user->id,
